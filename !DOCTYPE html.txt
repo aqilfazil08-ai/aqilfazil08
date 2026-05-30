@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bioscience Growth Rate Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; }
+        .math { background: #f4f4f4; padding: 15px; border-left: 5px solid #2ecc71; margin: 10px 0; }
+        #chart-container { position: relative; height: 400px; width: 100%; margin-top: 20px; }
+        #info { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Livestock Growth Analysis (Logistic Model)</h1>
+    <p>This model estimates the body weight of a broiler chicken in Malaysia over 50 days.</p>
+
+    <div class="math">
+        <strong>Growth Function f(x):</strong> $f(x) = \frac{3.0}{1 + 10e^{-0.15x}}$<br>
+        <strong>Growth Rate (Derivative) f'(x):</strong> $f'(x) = 3.0 \cdot \frac{1.5e^{-0.15x}}{(1 + 10e^{-0.15x})^2}$
+    </div>
+
+    <div id="chart-container">
+        <canvas id="growthChart"></canvas>
+    </div>
+
+    <div id="info">Click on the graph to see the growth rate at a specific day.</div>
+
+    <script>
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const xValues = Array.from({length: 51}, (_, i) => i);
+        // Logistic function: f(x) = L / (1 + b*e^(-kx))
+        const yValues = xValues.map(x => 3.0 / (1 + 10 * Math.exp(-0.15 * x)));
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: xValues,
+                datasets: [{ label: 'Weight (kg)', data: yValues, borderColor: '#3498db', fill: false }]
+            },
+            options: {
+                onClick: (e) => {
+                    const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
+                    if (points.length > 0) {
+                        const index = points[0].index;
+                        const x = xValues[index];
+                        // Derivative of Logistic: f'(x) = f(x) * k * (1 - f(x)/L)
+                        const f = yValues[index];
+                        const rate = f * 0.15 * (1 - f / 3.0);
+                        document.getElementById('info').innerHTML = `
+                            <strong>Day: ${x}</strong><br>
+                            Weight: ${f.toFixed(2)} kg<br>
+                            <strong>Instantaneous Growth Rate: ${rate.toFixed(3)} kg/day</strong><br>
+                            <em>Explanation:</em> At this stage, the bird is gaining roughly ${ (rate*1000).toFixed(0) } grams per day.
+                        `;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
